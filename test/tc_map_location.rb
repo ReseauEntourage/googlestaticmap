@@ -20,6 +20,14 @@ class MapLocationTest < Test::Unit::TestCase #:nodoc: all
     assert_nil m.latitude
     assert_nil m.longitude
   end
+  
+  def test_coordinates_array
+    m = MapLocation.new(:latitude => 39.1, :longitude => -77.1)
+    assert_equal 39.1, m.coordinates_array[0][0]
+    assert_equal -77.1, m.coordinates_array[0][1]
+    m = MapLocation.new(:address => "Washington, DC")
+    assert_equal 0, m.coordinates_array.length
+  end
 
   def test_with_address
     m = MapLocation.new(:address => "Washington, DC")

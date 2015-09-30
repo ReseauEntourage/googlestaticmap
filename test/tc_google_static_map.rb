@@ -79,6 +79,29 @@ class GoogleStaticMapTest < Test::Unit::TestCase #:nodoc: all
     assert_nothing_raised {f = g.relative_url}
     assert !f.include?("http://maps.googleapis.com")
   end
+  
+  def test_url_polyline
+    g = default_map
+    g.paths[0].polyline = true
+    u = nil
+    assert_nothing_raised { u = g.url }
+    assert_equal 7, u.split("&").length, u
+    assert u.include?("size=600x400"), "width and height did not get converted in to a size"
+    assert u.include?("maptype=hybrid")
+    assert u.include?("scale=2")
+    assert u.include?("asdf")
+    assert u.include?("http://maps.googleapis.com")
+    assert u.include?("color:0x00FF00FF")
+    assert u.include?("fillcolor:0x00FF0060")
+    assert u.include?("enc:_cykF%7Eu_xM%3F_etB_cmA%3F%3F%7EdtB%7EbmA%3F"), "Polygon not in URL - #{u}"
+    assert u.include?("Washington%2C+DC")
+    assert !u.include?("key"), "API included when it shouldn't be"
+    assert !u.include?("client"), "Client included when it shouldn't be"
+
+    f = nil
+    assert_nothing_raised {f = g.relative_url}
+    assert !f.include?("http://maps.googleapis.com")
+  end
 
   def test_channel
     g = default_map

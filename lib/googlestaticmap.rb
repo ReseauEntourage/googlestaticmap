@@ -4,6 +4,8 @@
 require 'cgi'
 require 'net/http'
 require 'net/https' if RUBY_VERSION < "1.9"
+gem 'polylines', '>=0.3.0'
+require 'polylines'
 require File.dirname(__FILE__) +  '/googlestaticmap_helper'
 
 MAP_SEPARATOR = CGI.escape("|")
@@ -188,6 +190,14 @@ class MapLocation
       raise Exception.new("Need to set either latitude and longitude, or address")
     end
   end
+  
+  def coordinates_array
+    if latitude && longitude
+      [[latitude.to_f, longitude.to_f]]
+    else
+      []
+    end
+  end
 end
 
 # A single marker to place on the map.  Initialize and pass
@@ -248,6 +258,9 @@ class MapPath
 
   # MapPositions for each point on the line
   attr_accessor :points
+  
+  # Regular or polyline encoding
+  attr_accessor :polyline
 
   # Pass an optional hash of arguments
   def initialize(attrs={})
@@ -257,9 +270,13 @@ class MapPath
 
   def to_s
     raise Exception.new("Need more than one point for the path") unless @points && @points.length > 1
-    attrs = GoogleStaticMapHelpers.safe_instance_variables(self, ["points"])
+    attrs = GoogleStaticMapHelpers.safe_instance_variables(self, ["points", "polyline"])
     s = attrs.to_a.sort_by {|x| x[0]}.collect {|k| "#{k[0]}:#{CGI.escape(k[1].to_s)}"}.join(MAP_SEPARATOR)
-    s << MAP_SEPARATOR << @points.join(MAP_SEPARATOR)
+    if polyline
+      s << MAP_SEPARATOR << 'enc:' << CGI.escape(Polylines::Encoder.encode_points(@points.flat_map(&:coordinates_array)))
+    else
+      s << MAP_SEPARATOR << @points.join(MAP_SEPARATOR)
+    end
   end
 end
 
